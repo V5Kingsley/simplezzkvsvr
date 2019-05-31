@@ -68,7 +68,9 @@ int main()
   }
   //tree.show();
 
-  for(int i = tree_size; i < tree_size * 2; ++i)
+  std::cout<<"size: "<<tree.size()<<std::endl;
+
+  for(int i = tree_size; i < tree_size * 7; ++i)
   {
     srand(i);
     int num = rand() % tree_size;
@@ -77,6 +79,7 @@ int main()
   }
 
   tree.show();
+  std::cout<<"size: "<<tree.size()<<std::endl;
   
 
 }

@@ -3,8 +3,11 @@
 
 #include <fcntl.h>
 #include <unistd.h>
+
 #include <string>
 using std::string;
+
+#include <boost/lexical_cast.hpp>
 
 #define LOGGER_WARN
 #define LOGGER_DEBUG
@@ -22,6 +25,8 @@ public:
   long set(const K &key, const V &value);
 
   V get(long offset);
+
+  void erase(const K &key);
 
 private:
   string client_name_;
@@ -61,13 +66,66 @@ SimpleKVStore<K, V>::SimpleKVStore(string client_name)
 template <typename K, typename V>
 long SimpleKVStore<K, V>::set(const K &key, const V &value)
 {
-
+  string key_msg, value_msg;
+  try
+  {
+    key_msg = boost::lexical_cast<string>(key);
+    value_msg = boost::lexical_cast<string>(value);
+  }
+  catch(boost::bad_lexical_cast& e)
+  {
+    std::cerr << e.what() << '\n';
+  }
+  
+  lseek(file_fd_, 0, SEEK_END);
+  string msg_begin = "-set <" + key_msg + "> <";
+  write(file_fd_, msg_begin.c_str(), msg_begin.size());
+  long offset = ftell(file_);
+  string msg_end = value_msg + ">\n";
+  write(file_fd_, msg_end.c_str(), msg_end.size());
+  return offset;
 }
 
 template <typename K, typename V>
 V SimpleKVStore<K, V>::get(long offset)
 {
-  
+  lseek(file_fd_, offset, SEEK_SET);
+  char value[255];
+  int index = 0;
+  read(file_fd_, value, 1);
+  while(value[index] != '>')
+  {
+    ++index;
+    read(file_fd_, value + index, 1);
+  }
+  value[++index] = '\0';
+  string value_msg = value;
+  try
+  {
+    V value_ret = boost::lexical_cast<V>(value_msg);
+    return value_ret;
+  }
+  catch(boost::bad_lexical_cast& e)
+  {
+    std::cerr << e.what() << '\n';
+  }
+}
+
+template <typename K, typename V>
+void SimpleKVStore<K, V>::erase(const K &key)
+{
+  string key_msg;
+  try
+  {
+    key_msg = boost::lexical_cast<string>(key);
+  }
+  catch(const boost::bad_lexical_cast& e)
+  {
+    std::cerr << e.what() << '\n';
+  }
+  lseek(file_fd_, 0, SEEK_END);
+  string msg = "-delete <" + key_msg + ">\n";
+  write(file_fd_, msg.c_str(), msg.size());
 }
 
 } // namespace kvsvr

@@ -48,7 +48,8 @@ public:
   BTreeIndex()
     : pRoot_(nullptr), 
       min_keys_size_((M + 1) / 2 - 1), 
-      max_child_size_(M + 1)
+      max_child_size_(M + 1),
+      size_(0)
   {
     assert(M >= 3);
   }
@@ -121,6 +122,7 @@ public:
       pRoot_ = new Node;
       pRoot_->keys_[0] = new_keyIndex;
       pRoot_->size_ = 1;
+      ++size_;
       return true;
     }
 
@@ -130,6 +132,8 @@ public:
       //ret.first->keys_[ret.second].offset = new_keyIndex.offset;
       return false;
     }
+
+    ++size_;
 
     Node *pNode = ret.first;
     Node *pSub = nullptr;
@@ -216,6 +220,8 @@ public:
     if(erase_node.second == -1)
       return false;
     
+    --size_;
+
     Node *node = erase_node.first;
     int pos = erase_node.second;
 
@@ -374,6 +380,11 @@ public:
       return false;
     else
       return true;
+  }
+
+  size_t size()
+  {
+    return size_;
   }
 
   /**
@@ -645,6 +656,7 @@ private:
   Node *pRoot_;
   size_t min_keys_size_;
   size_t max_child_size_;
+  size_t size_;
 };
 
 } // namespace kvsvr

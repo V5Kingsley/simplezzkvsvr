@@ -62,6 +62,26 @@ public:
     return false;
   }
 
+/**
+ * @brief Erase key 
+ * 
+ * @param key 
+ * @return true If key exists
+ * @return false Not exist
+ */
+  bool erase(const K &key)
+  {
+    auto iter = m_.find(key);
+    if (iter == m_.end())
+      return false;
+
+    Node *node = iter->second;
+    remove(node);
+    delete node;
+    m_.erase(iter);
+    return true;
+  }
+
 
 /**
  * @brief Set the value of the key 

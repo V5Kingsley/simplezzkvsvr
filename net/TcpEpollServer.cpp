@@ -20,11 +20,11 @@
 namespace kvsvr
 {
 
-TcpEpollServer::TcpEpollServer(ThreadPool *pool, parameters::Parameters *parameters)
+TcpEpollServer::TcpEpollServer(KVSVRPool *pool, parameters::Parameters *parameters)
   : TcpServer(pool, parameters->getListenPort()),
-    http_parameters_(parameters)
+    http_parameters_(parameters),
+    kv_pool_(pool)
 {
-  
 }
 
 int TcpEpollServer::efd_ = eventfd(0, 0); // event fd. used in sigint to quit the handle_request loop.
@@ -61,7 +61,7 @@ void TcpEpollServer::add_event(int fd, int event_type)
 {
   epoll_event e;
   e.data.fd = fd;
-  e.events = event_type;
+  e.events = event_type | EPOLLET;
   epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, fd, &e);
 }
 
@@ -101,7 +101,14 @@ void TcpEpollServer::client_service(int client_fd)
 {
   DEBUG("handling client request... client fd: %d\n", client_fd);
 
-
+  char rcv_buffer[BUFSIZ];
+  int ret = recv(client_fd, rcv_buffer, BUFSIZ, MSG_DONTWAIT);
+  if (ret == -1)
+  {
+    DEBUG("receive error !\n");
+    return;
+  }
+  kv_pool_->add_kv_task(client_fd, "kingsley", rcv_buffer);
 }
 
 /**
@@ -180,7 +187,7 @@ void TcpEpollServer::handle_request()
         s = read(time_fd, &exp, sizeof(uint64_t));
         assert(s == sizeof(uint64_t));
         timer_tick = true;
-        DEBUG("timer tick!!!\n");
+        //DEBUG("timer tick!!!\n");
       }
       else if((events[i].data.fd == efd_ ) && (events[i].events & EPOLLIN))  // got the event fd signal to quit the loop.
       {
@@ -198,7 +205,7 @@ void TcpEpollServer::handle_request()
         {
           continue;  // How to handle overflowed task?
         }*/
-        del_event(events[i].data.fd, EPOLLIN);
+        //del_event(events[i].data.fd, EPOLLIN);
       }
       else if(events[i].events & EPOLLRDHUP) // a client close the fd. Never got the signal??
       {
@@ -212,7 +219,8 @@ void TcpEpollServer::handle_request()
       }
     }
 
-    if(timer_tick)   // timer ticking. Remove redundant client links.
+    //if(timer_tick)   // timer ticking. Remove redundant client links.
+    if(false)
     {
       time_t current_time = time(NULL);
       while(!client_timers_queue_.empty())

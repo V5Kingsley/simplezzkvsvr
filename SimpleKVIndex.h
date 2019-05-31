@@ -33,11 +33,11 @@ public:
 
   bool get(const K &key, V &value);
 
+  bool erase(const K &key);
+
 private:
   BTreeIndex<K, M> BTree_;
   LRUCache<K, V> lru_;
-  FILE *file_;
-  int file_fd_;
   std::shared_ptr<SimpleKVStore<K, V>> KVStore_;
 };
 
@@ -49,7 +49,6 @@ void SimpleKVIndex<K, V, M>::set(const K &key, const V &value)
   long last_offset;
   if (BTree_.findKeyOffset(key, last_offset) == false)  // not exit
   {
-    std::cout << key << " is not in tree" << std::endl;
     BTree_.insert(key, offset);
   }
   else
@@ -71,6 +70,17 @@ bool SimpleKVIndex<K, V, M>::get(const K &key, V &value)
   // get value from file
   value = KVStore_->get(offset);
   lru_.set(key, value);
+  return true;
+}
+
+template <typename K, typename V, size_t M>
+bool SimpleKVIndex<K, V, M>::erase(const K &key)
+{
+  if(BTree_.erase(key) == false)
+    return false;
+  
+  lru_.erase(key);
+  KVStore_->erase(key);
   return true;
 }
 

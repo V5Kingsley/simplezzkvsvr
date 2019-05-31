@@ -22,6 +22,7 @@ namespace kvsvr
 
 class ThreadPool : boost::noncopyable
 {
+public:
 typedef std::function<void ()> TaskFunc;
 
 public:
@@ -29,13 +30,13 @@ public:
 
   void start();
 
-  void thread_routine(int index);
+  virtual void thread_routine(int index);
 
-  void distribute_task();
+  virtual void distribute_task();
 
   work_thread::WorkThread* get_next_work_thread();
 
-  ~ThreadPool()
+  virtual ~ThreadPool()
   { 
     for(int i = 0; i < work_threads_.size(); ++i)
     {
@@ -43,11 +44,16 @@ public:
     }
   }
 
-  status add_task_to_pool(TaskFunc new_task);
+  virtual status add_task_to_pool(TaskFunc new_task);
 
-  void close_pool();
+  virtual void close_pool();
 
-private:
+protected:
+  WorkQueue<work_thread::Work::WorkPtr> pool_work_queue_;
+  int max_work_num_;
+  bool pool_activate;
+  sem_t task_num_;
+  
   std::vector<work_thread::WorkThread*> work_threads_;
   std::shared_ptr<my_thread::Thread> distribute_thread_;
   int next_;
@@ -57,17 +63,10 @@ private:
   my_condition::Condition boot_cond_;
 
   pthread_barrier_t pool_barrier_;
-  bool pool_activate;
 
   my_mutex::MutexLock pool_mutex_;
 
-  sem_t task_num_;
-
-  WorkQueue<work_thread::Work::WorkPtr> pool_work_queue_;
-
   parameters::Parameters *pool_parameters_;
-
-  int max_work_num_;
 
 };
 

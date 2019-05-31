@@ -20,6 +20,8 @@
 #include "timer_tick.h"
 #include "timer_queue.h"
 
+#include "../kvsvr_pool.h"
+
 namespace kvsvr
 {
 
@@ -28,7 +30,7 @@ class ThreadPool;
 class TcpEpollServer : public TcpServer
 {
 public:
-  TcpEpollServer(ThreadPool* pool, parameters::Parameters* parameters);
+  TcpEpollServer(KVSVRPool* pool, parameters::Parameters* parameters);
 
   virtual void handle_request() override;
 
@@ -59,6 +61,8 @@ private:
 
   timer_tick::TimerQueue client_timers_queue_;  // client timer queue
   timer_tick::Timer* client_fd_array_[MAX_FD];  // client fd and its timer
+
+  KVSVRPool *kv_pool_;
 
 };
 
