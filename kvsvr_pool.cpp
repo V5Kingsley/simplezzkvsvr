@@ -123,103 +123,10 @@ status KVSVRPool::add_kv_task(int client_fd, string client_name, string kv_task)
   return SUCCESS;
 }
 
-task_type::taskType KVSVRPool::get_task_type(const string & task_str, string &key, string &value)
-{
-  
-  int length = task_str.length();
-  int i = 0;
-  if(task_str[i++] != '-')
-    return task_type::ERROR;
-
-  string task_type;
-
-  while (i != length && task_str[i] != ' ')
-    task_type.push_back(task_str[i++]);
-
-  if (task_type == "get")
-  {
-    string key_str;
-    if(task_str[i++] != ' ')
-      return task_type::ERROR;
-    if(task_str[i++] != '<')
-      return task_type::ERROR;
-    while(i != length && task_str[i] != '>')
-      key_str.push_back(task_str[i++]);
-    if(i == length - 1 && task_str[i] == '>')
-    {
-      key = key_str;
-      return task_type::GET;
-    }
-    else
-    {
-      return task_type::ERROR;
-    }
-  }
-  else if (task_type == "set")
-  {
-    string key_str, value_str;
-    if(task_str[i++] != ' ')
-      return task_type::ERROR;
-    if(task_str[i++] != '<')
-      return task_type::ERROR;
-    while(i != length && task_str[i] != '>')
-      key_str.push_back(task_str[i++]);
-    if(i < length - 4 && task_str[i] == '>' && task_str[i + 1] == ' ' && task_str[i + 2] == '<')
-    {
-      i += 3;
-      while(i != length && task_str[i] != '>')
-        value_str.push_back(task_str[i++]);
-      if(i == length - 1 && task_str[i] == '>')
-      {
-        key = key_str;
-        value = value_str;
-        return task_type::SET;
-      }
-      else
-      {
-        return task_type::ERROR;
-      }
-    }
-    else
-    {
-      return task_type::ERROR;
-    }
-  }
-  else if (task_type == "delete")
-  {
-    string key_str;
-    if(task_str[i++] != ' ')
-      return task_type::ERROR;
-    if(task_str[i++] != '<')
-      return task_type::ERROR;
-    while(i != length && task_str[i] != '>')
-      key_str.push_back(task_str[i++]);
-    if(i == length - 1 && task_str[i] == '>')
-    {
-      key = key_str;
-      return task_type::DELETE;
-    }
-    else
-    {
-      return task_type::ERROR;
-    }
-  }
-  else if (task_type == "stats")
-  {
-  }
-  else if (task_type == "quit")
-  {
-  }
-  else
-  {
-    DEBUG("Invalid request!");
-    return task_type::ERROR;
-  }
-}
-
 void KVSVRPool::get_kv_task(struct clientInfo *client, const string &key)
 {
-  my_mutex::MutexLockGuard mlg(client->client_mutex);
+  //my_mutex::MutexLockGuard mlg(client->client_mutex);
+  read_lock rlock(client->client_mutex);
   string value;
   if (client->client_file->get(key, value))
   {
@@ -234,7 +141,8 @@ void KVSVRPool::get_kv_task(struct clientInfo *client, const string &key)
 
 void KVSVRPool::set_kv_task(struct clientInfo *client, const string &key, const string &value)
 {
-  my_mutex::MutexLockGuard mlg(client->client_mutex);
+  //my_mutex::MutexLockGuard mlg(client->client_mutex);
+  write_lock wlock(client->client_mutex);
   if(client->reform == true)
   {
     // reform
@@ -248,7 +156,8 @@ void KVSVRPool::set_kv_task(struct clientInfo *client, const string &key, const 
 
 void KVSVRPool::delete_kv_task(struct clientInfo *client, const string &key)
 {
-  my_mutex::MutexLockGuard mlg(client->client_mutex);
+  //my_mutex::MutexLockGuard mlg(client->client_mutex);
+  write_lock wlock(client->client_mutex);
   if(client->reform == true)
   {
     // reform

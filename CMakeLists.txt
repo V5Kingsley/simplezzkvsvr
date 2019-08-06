@@ -16,7 +16,7 @@ add_subdirectory(net)
 add_library(BTree BTree_index.cpp)
 add_library(LRU LRU.cpp)
 add_library(SimpleKVIndex SimpleKVIndex.cpp)
-add_library(SimpleKVStore SimpleKVStore.cpp)
+#add_library(SimpleKVStore SimpleKVStore.cpp)
 add_library(kvsvr_pool kvsvr_pool.cpp)
 
 
@@ -34,7 +34,7 @@ set(KVSVR_LIBS
   BTree
   LRU
   SimpleKVIndex
-  SimpleKVStore
+  #SimpleKVStore
   kvsvr_pool 
 )
 
@@ -53,7 +53,7 @@ add_executable(SimpleKVIndex_test test/SimpleKVIndex_test)
 target_link_libraries(SimpleKVIndex_test SimpleKVIndex BTree LRU my_thread logger) 
 
 add_executable(kvsvr_pool_test test/kvsvr_pool_test.cpp)
-target_link_libraries(kvsvr_pool_test ${CMAKE_THREAD_LIBS_INIT} ${KVSVR_LIBS} ${BASE_LIBS})
+target_link_libraries(kvsvr_pool_test ${CMAKE_THREAD_LIBS_INIT} ${KVSVR_LIBS} ${BASE_LIBS} /usr/local/lib/libboost_system.a /usr/local/lib/libboost_thread.a)
 
 
 

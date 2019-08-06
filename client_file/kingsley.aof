@@ -8,3 +8,5 @@ database kingsley
 -set <lincoln> <zhanan>
 -delete <lincoln>
 -set <kingsley> <zhanan>
+-set <a> <a>
+-set <a> <a>

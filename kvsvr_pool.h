@@ -5,6 +5,7 @@
 #include <thread_pool.h>
 #include "SimpleKVIndex.h"
 #include <map>
+#include <boost/thread/thread.hpp>
 using std::string;
 
 namespace kvsvr
@@ -12,16 +13,17 @@ namespace kvsvr
 
 #define BTREE_ORDER 5
 
-namespace task_type
-{
-enum taskType{GET, SET, DELETE, STATS, QUIT, ERROR};
-}
+typedef boost::shared_lock<boost::shared_mutex> read_lock;
+typedef boost::unique_lock<boost::shared_mutex> write_lock;
+
 struct clientInfo
 {
   int fd;
   string client_name;
   std::shared_ptr<SimpleKVIndex<string, string, BTREE_ORDER>> client_file;
-  my_mutex::MutexLock client_mutex;
+  //my_mutex::MutexLock client_mutex;
+  boost::shared_mutex client_mutex;
+  
   bool reform;
 };
 
@@ -54,8 +56,6 @@ public:
 
 private:
   std::map<string, struct clientInfo*> client_map_;
-
-  task_type::taskType get_task_type(const string & task_str, string &key, string &value);
 
   string succeed_response_;
   string fail_response_;
